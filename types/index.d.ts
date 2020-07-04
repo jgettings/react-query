@@ -222,7 +222,7 @@ export interface BaseQueryOptions<TResult = unknown, TError = Error> {
    * Set this to `false` to disable automatic refetching when the query mounts or changes query keys.
    * To refetch the query, use the `refetch` method returned from the `useQuery` instance.
    */
-  enabled?: boolean
+  enabled?: boolean | unknown
   /**
    * If `false`, failed queries will not retry by default.
    * If `true`, failed queries will retry infinitely., failureCount: num
@@ -286,6 +286,7 @@ export interface QueryResultBase<TResult, TError = Error> {
   query: object
   updatedAt: number
   refetch: ({ throwOnError }?: { throwOnError?: boolean }) => Promise<TResult>
+  clear: () => void
 }
 
 export interface QueryIdleResult<TResult, TError = Error>
@@ -394,7 +395,9 @@ export function useMutation<
 >(
   mutationFn: MutationFunction<TResult, TVariables, TError, TSnapshot>,
   mutationOptions?: MutationOptions<TResult, TVariables, TError, TSnapshot>
-): [
+): MutationResultPair<TResult, TVariables, TError>
+
+export type MutationResultPair<TResult, TVariables, TError> = [
   MutateFunction<TResult, TVariables, TError>,
   MutationResult<TResult, TError>
 ]
@@ -540,6 +543,12 @@ export interface CachedQuery<T, TError = unknown> {
 
 export type QueryKey<TKey> = TKey | false | null | undefined
 
+export type QueryKeyOrPredicateFn =
+  | AnyQueryKey
+  | string
+  | boolean
+  | ((query: CachedQuery<unknown>) => boolean)
+
 export interface QueryCache {
   prefetchQuery<TResult, TKey extends AnyQueryKey, TError = Error>(
     queryKey: QueryKey<TKey>,
@@ -580,9 +589,9 @@ export interface QueryCache {
     prefetch?: PrefetchQueryOptions
   }): Promise<TResult>
 
-  getQueryData<T = unknown>(key: AnyQueryKey | string): T | undefined
+  getQueryData<T = unknown>(key: QueryKeyOrPredicateFn): T | undefined
   setQueryData<TResult, TError = Error>(
-    key: AnyQueryKey | string,
+    queryKeyOrPredicateFn: QueryKeyOrPredicateFn,
     dataOrUpdater:
       | TResult
       | undefined
@@ -590,10 +599,7 @@ export interface QueryCache {
     config?: SetQueryDataQueryOptions<TResult, TError>
   ): void
   invalidateQueries<TResult>(
-    queryKeyOrPredicateFn:
-      | AnyQueryKey
-      | string
-      | ((query: CachedQuery<unknown>) => boolean),
+    queryKeyOrPredicateFn: QueryKeyOrPredicateFn,
     {
       exact,
       throwOnError,
@@ -607,19 +613,16 @@ export interface QueryCache {
     }
   ): Promise<TResult>
   removeQueries(
-    queryKeyOrPredicateFn:
-      | AnyQueryKey
-      | string
-      | ((query: CachedQuery<unknown>) => boolean),
+    queryKeyOrPredicateFn: QueryKeyOrPredicateFn,
     { exact }?: { exact?: boolean }
   ): void
-  getQuery(queryKey: AnyQueryKey): CachedQuery<unknown> | undefined
-  getQueries(queryKey: AnyQueryKey): Array<CachedQuery<unknown>>
+  getQuery(queryKeyOrPredicateFn: QueryKeyOrPredicateFn): CachedQuery<unknown> | undefined
+  getQueries(
+    queryKeyOrPredicateFn: QueryKeyOrPredicateFn,
+    { exact }?: { exact?: boolean }
+  ): Array<CachedQuery<unknown>>
   cancelQueries(
-    queryKeyOrPredicateFn:
-      | AnyQueryKey
-      | string
-      | ((query: CachedQuery<unknown>) => boolean),
+    queryKeyOrPredicateFn: QueryKeyOrPredicateFn,
     { exact }?: { exact?: boolean }
   ): void
   isFetching: number

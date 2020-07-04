@@ -285,7 +285,6 @@ $ npm i --save react-query
 $ yarn add react-query
 ```
 
-
 # Defaults to keep in mind
 
 Out of the box, React Query is configured with **aggressive but sane** defaults. **Sometimes these defaults can catch new users off guard or make learning/debugging difficult if they are unknown by the user.** Keep them in mind as you continue to learn and use React Query:
@@ -1039,7 +1038,9 @@ Global configuration:
 import { ReactQueryConfigProvider } from 'react-query'
 
 const queryConfig = {
-  suspense: true,
+  shared: {
+    suspense: true,
+  },
 }
 
 function App() {
@@ -1138,7 +1139,7 @@ const query = useQuery('todos', () => {
   })
 
   // Cancel the request if React Query calls the `promise.cancel` method
-  promise.cancel = controller.abort
+  promise.cancel = () => controller.abort()
 
   return promise
 })
@@ -1727,6 +1728,7 @@ const {
   isFetching,
   failureCount,
   refetch,
+  clear,
 } = useQuery(queryKey, queryFn?, {
   suspense,
   queryKeySerializerFn,
@@ -1769,8 +1771,9 @@ const queryInfo = useQuery({
   - Receives the following variables in the order that they are provided:
     - Query Key Variables
   - Must return a promise that will either resolves data or throws an error.
-- `enabled: Boolean`
+- `enabled: Boolean | unknown`
   - Set this to `false` to disable this query from automatically running.
+  - Actually it can be anything that will pass a boolean condition. See [Dependent Queries](#dependent-queries) for more information.
 - `retry: Boolean | Int | Function(failureCount, error) => shouldRetry | Boolean`
   - If `false`, failed queries will not retry by default.
   - If `true`, failed queries will retry infinitely.
@@ -1858,6 +1861,8 @@ const queryInfo = useQuery({
   - A function to manually refetch the query if it is stale.
   - To bypass the stale check, you can pass the `force: true` option and refetch it regardless of it's freshness
   - If the query errors, the error will only be logged. If you want an error to be thrown, pass the `throwOnError: true` option
+- `clear: Function() => void`
+  - A function to remove the query from the cache.
 
 ## `usePaginatedQuery`
 
@@ -2462,11 +2467,15 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://github.com/dpyzo0o"><img src="https://avatars1.githubusercontent.com/u/24768249?v=4" width="100px;" alt=""/><br /><sub><b>dpyzo0o</b></sub></a><br /><a href="https://github.com/tannerlinsley/react-query/commits?author=dpyzo0o" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/jelteliekens"><img src="https://avatars1.githubusercontent.com/u/3418474?v=4" width="100px;" alt=""/><br /><sub><b>Jelte Liekens</b></sub></a><br /><a href="https://github.com/tannerlinsley/react-query/commits?author=jelteliekens" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/jgettings"><img src="https://avatars0.githubusercontent.com/u/4183742?v=4" width="100px;" alt=""/><br /><sub><b>Jen Gettings</b></sub></a><br /><a href="https://github.com/tannerlinsley/react-query/commits?author=jgettings" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/justincy"><img src="https://avatars2.githubusercontent.com/u/1037458?v=4" width="100px;" alt=""/><br /><sub><b>Justin</b></sub></a><br /><a href="https://github.com/tannerlinsley/react-query/commits?author=justincy" title="Code">💻</a></td>
+    <td align="center"><a href="http://www.marceloalves.com"><img src="https://avatars1.githubusercontent.com/u/216782?v=4" width="100px;" alt=""/><br /><sub><b>Marcelo Alves</b></sub></a><br /><a href="https://github.com/tannerlinsley/react-query/commits?author=MarceloAlves" title="Code">💻</a></td>
   </tr>
 </table>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
